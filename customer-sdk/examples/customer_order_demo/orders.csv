@@ -1,0 +1,6 @@
+order_id,customer,amount_usd
+O-1001,Acme,120.00
+O-1002,Northstar,85.50
+O-1002,Northstar,85.50
+O-1003,,42.00
+O-1004,Harbor,-12.00

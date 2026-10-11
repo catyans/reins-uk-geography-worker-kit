@@ -1,0 +1,17 @@
+---
+name: reins-integrate
+description: Connect one existing Python Agent workflow to the hosted Reins worker API with the public reins-sdk. Use when asked to add runtime admission, cost recording, or task status to customer-owned Agent code. Do not use for Reins server or dashboard development.
+---
+
+# Connect one customer workflow to hosted Reins
+
+Work in the customer's repository, not the private Reins server repository. Read [references/integration.md](references/integration.md) for the supported SDK calls, failure behavior, and verification before editing.
+
+1. Find the actual business-task entrypoint, the paid provider/tool call, existing model selection, provider retries, cost/usage response, and the application's acceptance check. Select one complete path. If the task ID or measured cost is unavailable, add a clearly named parameter or adapter boundary rather than inventing data.
+2. Install the public `reins-sdk` dependency and add configuration for `REINS_BASE_URL` and `REINS_WORKER_TOKEN` in the customer's backend secret environment. Never put the worker token in frontend code, logs, fixtures, or commits. The browser pairing token is unrelated. Do not require or copy the private `reins` package.
+3. Preserve the existing prompt, provider client, business output, and side effects. Before the paid operation, get the pinned Reins decision and reserve a conservative upper bound. Execute only on `continue` or `escalate` and a successful reservation. Apply the pinned model; if the existing provider call cannot honor it, stop and explain the mismatch. After dispatch, settle its actual charge and the application's real validation outcome. If the charge is unknown, mark the request uncertain; never turn it into zero cost or retry the paid call automatically.
+4. For a synchronous single model call, prefer `ReinsClient.run_paid_call()` with a `Charge`. For multiple calls, async code, tools, or redacted results, use explicit `decision()`, `reserve()`, `settle()` and `uncertain()` as described in the reference. Only calls that pass through these boundaries are controlled.
+5. For the isolated demo, after adapting the code, run `python -m reins_sdk.pair` in the customer environment. Give the displayed code to the Reins operator to paste into **Settings > Pair a customer SDK** with one existing Hosted task ID. That task identifies the customer account and deployment. Keep the saved token file private; after approval, run `python -m reins_sdk.pair --check`. Start each subsequent business run with `client.start_run()` and pass its returned `workflow_id` to the SDK calls. Do not ask the customer to create or enter another task ID. The helper uses the demo HTTPS IP by default and accepts `--base-url` for another endpoint.
+6. Run focused existing tests plus a fake-provider test that proves no provider call occurs on stop/hold, exactly one occurs on admission, the result remains unchanged, and a provider failure leaves an uncertain request. Do not run a paid live workload merely to validate the patch. Leave a short `REINS_INTEGRATION.md` stating the changed workflow, covered costs, required environment variables, how its task ID is created, how to inspect results, and how to remove the integration.
+
+If the request is only to prepare an integration plan, do not edit customer code. If the workflow cannot produce an honest upper bound or actual charge, explain the gap and limit the patch to a documented boundary until those values are available.
